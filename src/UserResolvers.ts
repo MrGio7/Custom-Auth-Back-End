@@ -16,6 +16,7 @@ import { createAccessToken, createRefreshToken } from "./auth";
 import { isAuth } from "./isAuth";
 import { sendRefreshToken } from "./sendRefreshToken";
 import { getConnection } from "typeorm";
+import { verify } from "jsonwebtoken";
 
 @ObjectType()
 class LoginResponse {
@@ -40,6 +41,24 @@ export class UserResolvers {
   @Query(() => [User])
   users() {
     return User.find();
+  }
+
+  @Query(() => User, { nullable: true })
+  loggedInUser(@Ctx() context: MyContext) {
+    const authorization = context.req.headers["authorization"];
+
+    if (!authorization) {
+      throw null;
+    }
+
+    try {
+      const token = authorization.split(" ")[1];
+      const payload: any = verify(token, process.env.ACCESS_TOKEN_SECRET!);
+      return User.findOne(payload.userId);
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
   }
 
   @Mutation(() => Boolean)
