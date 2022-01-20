@@ -50,7 +50,7 @@ export class UserResolvers {
     const authorization = context.req.headers["authorization"];
 
     if (!authorization) {
-      throw null;
+      return null;
     }
 
     try {
