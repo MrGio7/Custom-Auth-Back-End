@@ -20,7 +20,7 @@ import { SubscriptionServer } from "subscriptions-transport-ws";
   const httpServer = createServer(app);
   app.use(
     cors({
-      origin: "http://localhost:3000",
+      origin: process.env.CORS_ORIGIN || "http://localhost:3000",
       credentials: true,
     })
   );
