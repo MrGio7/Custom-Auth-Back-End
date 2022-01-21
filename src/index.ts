@@ -1,8 +1,10 @@
 import "dotenv/config";
 import "reflect-metadata";
 import express from "express";
+import { createServer } from "http";
 import { ApolloServer } from "apollo-server-express";
-import { buildSchema } from "type-graphql";
+import { execute, subscribe } from "graphql";
+import { buildSchema, PubSub } from "type-graphql";
 import { UserResolvers } from "./UserResolvers";
 import { createConnection } from "typeorm";
 import cookieParser from "cookie-parser";
@@ -11,9 +13,11 @@ import cors from "cors";
 import { createAccessToken, createRefreshToken } from "./auth";
 import { User } from "./entity/User";
 import { sendRefreshToken } from "./sendRefreshToken";
+import { SubscriptionServer } from "subscriptions-transport-ws";
 
 (async () => {
   const app = express();
+  const httpServer = createServer(app);
   app.use(
     cors({
       origin: process.env.CORS_ORIGIN || "http://localhost:3000",
@@ -56,11 +60,38 @@ import { sendRefreshToken } from "./sendRefreshToken";
 
   await createConnection();
 
+  const pubsub = PubSub();
+
+  const schema = await buildSchema({
+    resolvers: [UserResolvers],
+  });
+
+  const subscriptionServer = SubscriptionServer.create(
+    {
+      schema,
+      execute,
+      subscribe,
+    },
+    {
+      server: httpServer,
+      path: "/graphql",
+    }
+  );
+
   const apolloServer = new ApolloServer({
-    schema: await buildSchema({
-      resolvers: [UserResolvers],
-    }),
-    context: ({ req, res }) => ({ req, res }),
+    schema,
+    context: ({ req, res }) => ({ req, res, pubsub }),
+    plugins: [
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              subscriptionServer.close();
+            },
+          };
+        },
+      },
+    ],
   });
 
   await apolloServer.start();
@@ -69,7 +100,7 @@ import { sendRefreshToken } from "./sendRefreshToken";
 
   const port = process.env.PORT || 5000;
 
-  app.listen(port, () => {
+  httpServer.listen(port, () => {
     console.log(`Server is listening port: ${port}`);
   });
 })();

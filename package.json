@@ -24,6 +24,7 @@
       "nodemon": "^2.0.15",
       "pg": "^8.4.0",
       "reflect-metadata": "^0.1.10",
+      "subscriptions-transport-ws": "^0.11.0",
       "type-graphql": "^1.1.1",
       "typeorm": "0.2.41"
    },

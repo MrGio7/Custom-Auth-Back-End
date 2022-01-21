@@ -5,12 +5,16 @@ import {
   Int,
   Mutation,
   ObjectType,
+  Publisher,
+  PubSub,
   Query,
   Resolver,
+  Root,
+  Subscription,
   UseMiddleware,
 } from "type-graphql";
 import { compare, hash } from "bcryptjs";
-import { User } from "./entity/User";
+import { User, UserPayload } from "./entity/User";
 import { MyContext } from "./MyContext";
 import { createAccessToken, createRefreshToken } from "./auth";
 import { isAuth } from "./isAuth";
@@ -28,6 +32,7 @@ class LoginResponse {
 
 @Resolver()
 export class UserResolvers {
+  private autoIncrement = 0;
   @Query(() => String)
   hello() {
     return "hi!";
@@ -81,6 +86,7 @@ export class UserResolvers {
 
   @Mutation(() => Boolean)
   async register(
+    @PubSub("NOTIFICATIONS") publish: Publisher<any>,
     @Arg("email") email: string,
     @Arg("password") password: string
   ) {
@@ -95,6 +101,7 @@ export class UserResolvers {
       console.error(error);
       return false;
     }
+    await publish({ id: ++this.autoIncrement, email, password});
     return true;
   }
 
@@ -123,5 +130,10 @@ export class UserResolvers {
       accessToken: createAccessToken(user),
       user,
     };
+  }
+
+  @Subscription({ topics: "NOTIFICATIONS" })
+  normalSubscription(@Root() userPayload: UserPayload): User {
+    return { ...userPayload };
   }
 }
