@@ -30,7 +30,6 @@ class LoginResponse {
 
 @Resolver()
 export class UserResolvers {
-  private autoIncrement = 0;
   @Query(() => String)
   hello() {
     return "hi!";
@@ -49,7 +48,7 @@ export class UserResolvers {
 
   @Query(() => Number)
   async userCount() {
-    const [_allUsers, userCount] = await User.findAndCount();
+    const userCount = await User.count();
     return userCount;
   }
 
@@ -104,7 +103,7 @@ export class UserResolvers {
       console.error(error);
       return false;
     }
-    await publish({ id: ++this.autoIncrement, email });
+    await publish();
     return true;
   }
 
@@ -128,6 +127,8 @@ export class UserResolvers {
 
     // Success login
     sendRefreshToken(res, createRefreshToken(user));
+    user.logInCount++;
+    await user.save();
 
     return {
       accessToken: createAccessToken(user),
@@ -137,7 +138,7 @@ export class UserResolvers {
 
   @Subscription(() => Number, { topics: "NOTIFICATIONS" })
   async newUser() {
-    const [_allUsers, userCount] = await User.findAndCount();
+    const userCount = await User.count();
 
     return userCount;
   }

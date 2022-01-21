@@ -9,7 +9,7 @@ import { UserResolvers } from "./UserResolvers";
 import { createConnection } from "typeorm";
 import cookieParser from "cookie-parser";
 import { verify } from "jsonwebtoken";
-import cors from "cors";
+// import cors from "cors";
 import { createAccessToken, createRefreshToken } from "./auth";
 import { User } from "./entity/User";
 import { sendRefreshToken } from "./sendRefreshToken";
@@ -18,12 +18,12 @@ import { SubscriptionServer } from "subscriptions-transport-ws";
 (async () => {
   const app = express();
   const httpServer = createServer(app);
-  app.use(
-    cors({
-      origin: process.env.CORS_ORIGIN || "http://localhost:3000",
-      credentials: true,
-    })
-  );
+  // app.use(
+  //   cors({
+  //     origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  //     credentials: true,
+  //   })
+  // );
   app.use(cookieParser());
 
   app.get("/", (_req, res) => res.send("hello"));
@@ -96,7 +96,7 @@ import { SubscriptionServer } from "subscriptions-transport-ws";
 
   await apolloServer.start();
 
-  apolloServer.applyMiddleware({ app, cors: false });
+  apolloServer.applyMiddleware({ app });
 
   const port = process.env.PORT || 5000;
 
