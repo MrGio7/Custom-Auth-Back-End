@@ -18,7 +18,6 @@ import { createAccessToken, createRefreshToken } from "./auth";
 import { isAuth } from "./isAuth";
 import { sendRefreshToken } from "./sendRefreshToken";
 import { getConnection } from "typeorm";
-import { verify } from "jsonwebtoken";
 
 @ObjectType()
 class LoginResponse {
@@ -30,17 +29,6 @@ class LoginResponse {
 
 @Resolver()
 export class UserResolvers {
-  @Query(() => String)
-  hello() {
-    return "hi!";
-  }
-
-  @Query(() => String)
-  @UseMiddleware(isAuth)
-  bye(@Ctx() { payload }: MyContext) {
-    return `your user id is: ${payload!.userId}`;
-  }
-
   @Query(() => [User])
   users() {
     return User.find();
@@ -53,21 +41,9 @@ export class UserResolvers {
   }
 
   @Query(() => User, { nullable: true })
-  loggedInUser(@Ctx() context: MyContext) {
-    const authorization = context.req.headers["authorization"];
-
-    if (!authorization) {
-      return null;
-    }
-
-    try {
-      const token = authorization.split(" ")[1];
-      const payload: any = verify(token, process.env.ACCESS_TOKEN_SECRET!);
-      return User.findOne(payload.userId);
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
+  @UseMiddleware(isAuth)
+  loggedInUser(@Ctx() { payload }: MyContext) {
+    return User.findOne(payload!.userId);
   }
 
   @Mutation(() => Boolean)
@@ -93,6 +69,14 @@ export class UserResolvers {
     @PubSub("NOTIFICATIONS") publish: any
   ) {
     const hashedPassword = await hash(password, 12);
+
+    if (email.trim().length === 0) {
+      throw new Error("Please enter email");
+    }
+
+    if (password.trim().length === 0) {
+      throw new Error("Please enter password");
+    }
 
     try {
       await User.insert({
