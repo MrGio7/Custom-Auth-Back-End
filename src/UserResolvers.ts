@@ -5,16 +5,14 @@ import {
   Int,
   Mutation,
   ObjectType,
-  Publisher,
   PubSub,
   Query,
   Resolver,
-  Root,
   Subscription,
   UseMiddleware,
 } from "type-graphql";
 import { compare, hash } from "bcryptjs";
-import { User, UserPayload } from "./entity/User";
+import { User } from "./entity/User";
 import { MyContext } from "./MyContext";
 import { createAccessToken, createRefreshToken } from "./auth";
 import { isAuth } from "./isAuth";
@@ -41,13 +39,18 @@ export class UserResolvers {
   @Query(() => String)
   @UseMiddleware(isAuth)
   bye(@Ctx() { payload }: MyContext) {
-    console.log(payload);
     return `your user id is: ${payload!.userId}`;
   }
 
   @Query(() => [User])
   users() {
     return User.find();
+  }
+
+  @Query(() => Number)
+  async userCount() {
+    const [_allUsers, userCount] = await User.findAndCount();
+    return userCount;
   }
 
   @Query(() => User, { nullable: true })
@@ -86,9 +89,9 @@ export class UserResolvers {
 
   @Mutation(() => Boolean)
   async register(
-    @PubSub("NOTIFICATIONS") publish: Publisher<any>,
     @Arg("email") email: string,
-    @Arg("password") password: string
+    @Arg("password") password: string,
+    @PubSub("NOTIFICATIONS") publish: any
   ) {
     const hashedPassword = await hash(password, 12);
 
@@ -101,7 +104,7 @@ export class UserResolvers {
       console.error(error);
       return false;
     }
-    await publish({ id: ++this.autoIncrement, email, password});
+    await publish({ id: ++this.autoIncrement, email });
     return true;
   }
 
@@ -132,8 +135,10 @@ export class UserResolvers {
     };
   }
 
-  @Subscription({ topics: "NOTIFICATIONS" })
-  normalSubscription(@Root() userPayload: UserPayload): User {
-    return { ...userPayload };
+  @Subscription(() => Number, { topics: "NOTIFICATIONS" })
+  async newUser() {
+    const [_allUsers, userCount] = await User.findAndCount();
+
+    return userCount;
   }
 }

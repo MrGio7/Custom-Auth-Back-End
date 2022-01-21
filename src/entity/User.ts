@@ -19,15 +19,4 @@ export class User extends BaseEntity {
   tokenVersion: number;
 }
 
-export interface UserPayload {
-  id: number;
-  email: string;
-  password: string;
-  hasId: any;
-  save: any;
-  remove: any;
-  softRemove: any;
-  tokenVersion: any;
-  recover: any;
-  reload: any;
-}
+
