@@ -12,7 +12,7 @@
    },
    "logging": true,
    "entities": [
-      "src/entity/*.*"
+      "src/entity/**/*.ts"
    ],
    "migrations": [
       "src/migration/**/*.ts"
