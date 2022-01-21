@@ -1,10 +1,10 @@
 {
    "type": "postgres",
-   "host": "localhost",
+   "host": "ec2-54-220-243-77.eu-west-1.compute.amazonaws.com",
    "port": 5432,
-   "username": "postgres",
-   "password": "postgres",
-   "database": "custom-auth",
+   "username": "pwuxedyeordaxr",
+   "password": "ebf69eb7ae5aa981b8d12344c23eed93e46e91ffa092b42fee6f1f9f4d503e1c",
+   "database": "d8p69qfbsepu6e",
    "synchronize": true,
    "logging": false,
    "entities": [
