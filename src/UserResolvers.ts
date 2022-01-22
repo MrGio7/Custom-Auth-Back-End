@@ -68,7 +68,8 @@ export class UserResolvers {
     @Arg("password") password: string,
     @PubSub("NOTIFICATIONS") publish: any
   ) {
-    const hashedPassword = await hash(password, 12);
+    const hashedPassword = await hash(password, 12);    
+    const user = await User.findOne({ where: { email } });
 
     if (email.trim().length === 0) {
       throw new Error("Please enter email");
@@ -76,6 +77,10 @@ export class UserResolvers {
 
     if (password.trim().length === 0) {
       throw new Error("Please enter password");
+    }
+
+    if(user) {
+      throw new Error("Account already exists")
     }
 
     try {
